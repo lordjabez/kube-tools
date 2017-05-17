@@ -9,4 +9,4 @@ else
 fi
 
 
-kubectl $NAMESPACE get all -o wide
+kubectl $NAMESPACE get all -o wide 2>&1
