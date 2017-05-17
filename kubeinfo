@@ -1,0 +1,12 @@
+#!/bin/bash -e
+
+
+if [[ -n $1 ]]
+then
+  NAMESPACE="--namespace=$1"
+else
+  NAMESPACE=""
+fi
+
+
+kubectl $NAMESPACE get all -o wide

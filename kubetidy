@@ -1,0 +1,22 @@
+#!/bin/bash -e
+
+
+if [[ -n $1 ]]
+then
+  NAMESPACE="--namespace=$1"
+else
+  NAMESPACE=""
+fi
+
+
+echo "Deleting evicted pods."
+for pod in $(kubectl $NAMESPACE get pods | grep 'Evicted' | awk '{print $1}')
+do
+  kubectl $NAMESPACE delete pods $pod
+done
+
+echo "Deleting old replica sets."
+for rs in $(kubectl $NAMESPACE get replicasets | grep '0         0         0' | awk '{print $1}')
+do
+  kubectl $NAMESPACE delete replicasets $rs
+done

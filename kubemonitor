@@ -1,0 +1,4 @@
+#!/bin/bash -e
+
+
+watch -n 10 kubeinfo $1
