@@ -1,4 +1,4 @@
 #!/bin/bash -e
 
 
-watch -n 10 kubeinfo $1
+watch -n 15 kubeinfo $1
