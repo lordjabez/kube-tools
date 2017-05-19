@@ -1,12 +1,11 @@
 #!/bin/bash -e
 
+DEFAULT_NAMESPACE=''
+NAMESPACE="${1:-$DEFAULT_NAMESPACE}"
 
-if [[ -n $1 ]]
+if [[ -n "${NAMESPACE}" ]]
 then
-  NAMESPACE="--namespace=$1"
-else
-  NAMESPACE=""
+  NAMESPACE="--namespace=${NAMESPACE}"
 fi
-
 
 kubectl $NAMESPACE get all -o wide 2>&1
