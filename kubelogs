@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+
+
+from __future__ import print_function
+
+import argparse
+import itertools
+import subprocess
+import threading
+import time
+
+
+# These codes were extracted from the colorama package
+COLOR_CODES = ('\x1b[30m', '\x1b[34m', '\x1b[36m', '\x1b[32m', '\x1b[90m', '\x1b[94m',
+               '\x1b[96m', '\x1b[92m', '\x1b[95m', '\x1b[91m', '\x1b[97m', '\x1b[93m',
+               '\x1b[35m', '\x1b[31m', '\x1b[39m', '\x1b[37m', '\x1b[33m')
+RESET_CODE = '\x1b[0m'
+
+
+# Grab the command line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('namespace', nargs='?', help='namespace to tail')
+parser.add_argument('-l', '--lines', default=10, help='number of initial lines to show')
+parser.add_argument('-i', '--include', nargs='*', help='pods to include')
+parser.add_argument('-e', '--exclude', nargs='*', help='pods to exclude')
+args = parser.parse_args()
+
+
+kubecommand = 'kubectl'
+if args.namespace:
+    kubecommand += ' --namespace={0}'.format(args.namespace)
+
+initiallines = args.lines
+includes = args.include
+excludes = args.exclude
+
+
+podcommand = '{0} get pods -o name'.format(kubecommand)
+pods = subprocess.check_output(podcommand, shell=True)
+pods = {p.strip().replace('pod/', '') for p in pods.strip().split()}
+
+
+if includes:
+    includepods = set()
+    for include in includes:
+        for pod in pods:
+            if include in pod:
+                includepods.add(pod)
+    pods &= includepods
+
+if excludes:
+    excludepods = set()
+    for exclude in excludes:
+        for pod in pods:
+            if exclude in pod:
+                excludepods.add(pod)
+    pods -= excludepods
+
+
+colortable = dict(zip(pods, itertools.cycle(COLOR_CODES)))
+
+
+def tailpod(pod):
+    """
+    Tails an inidividual pod. If the kube tail command unexpectedly terminates
+    (which seems to happen regularly), it will be re-established automatically.
+    @param pod: The name of the pod to be tailed
+    """
+    lines = initiallines
+    while True:
+        tailcommand = '{0} logs -f {1} --tail={2}'.format(kubecommand, pod, lines)
+        process = subprocess.Popen(tailcommand, shell=True, stdout=subprocess.PIPE)
+        prefix = '{0}[{1}]{2} '.format(colortable[pod], pod, RESET_CODE)
+        for line in iter(process.stdout.readline, ''):
+            print(prefix + line, end='')
+        lines = 0
+
+
+for pod in pods:
+    tailthread = threading.Thread(target=tailpod, args=[pod])
+    tailthread.daemon = True
+    tailthread.start()
+
+
+try:
+    while True:
+        time.sleep(42)
+except KeyboardInterrupt:
+    pass
