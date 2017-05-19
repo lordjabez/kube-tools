@@ -21,7 +21,3 @@ namespace configured for the default context in `~/.kube/config` will be used.
 ## Installation
 
 The scripts can be copied to  /usr/local/bin by running `install`.
-
-## TODO
-
-*   Write a tool and interleaves the logs of every pod in a namespace, prefixed by pod name, and auto-restarts if needed
